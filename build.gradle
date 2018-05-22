@@ -1,0 +1,30 @@
+apply plugin: 'java'
+
+group 'org.firek'
+version '1.0'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+task fatJar(type: Jar) {
+    baseName = project.name + '-fat'
+    from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+    manifest {
+        attributes 'Main-Class': 'org.firek.Bank'
+    }
+}
+
+build.dependsOn fatJar
+
+dependencies {
+    compile group: 'com.sparkjava', name: 'spark-core', version: '2.7.2'
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'org.assertj', name: 'assertj-core', version: '3.10.0'
+}
