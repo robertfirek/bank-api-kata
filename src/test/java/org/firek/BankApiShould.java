@@ -50,7 +50,6 @@ public class BankApiShould {
     }
 
     @Test
-
     @Parameters(method = "account, anotherAccount")
     public void return_balance_for_given_balance(Account account, Amount expectedBalance) throws Exception {
         String transferEndpoint = String.format(ACCOUNT_BALANCE_ENDPOINT_URI, account.getNumber());
@@ -59,6 +58,17 @@ public class BankApiShould {
 
         assertThat(responseCode(response)).isEqualTo(HttpStatus.SC_OK);
         assertThat(amount(response)).usingComparator(Comparator.comparing(Amount::getAmount)).isEqualTo(expectedBalance);
+    }
+
+    @Test
+    public void inform_that_account_cannot_be_found() throws Exception {
+        Integer notExistingAccountNumber = 101;
+        String transferEndpoint = String.format(ACCOUNT_BALANCE_ENDPOINT_URI, notExistingAccountNumber);
+
+        HttpResponse response = Request.Get(transferEndpoint).execute().returnResponse();
+
+        assertThat(responseCode(response)).isEqualTo(HttpStatus.SC_NOT_FOUND);
+        assertThat(responseBody(response)).isBlank();
     }
 
     private Object[] account() {
@@ -71,6 +81,10 @@ public class BankApiShould {
 
     private Amount amount(HttpResponse response) throws IOException {
         return new Gson().fromJson(EntityUtils.toString(response.getEntity()), Amount.class);
+    }
+
+    private String responseBody(HttpResponse response) throws IOException {
+        return EntityUtils.toString(response.getEntity());
     }
 
     private int responseCode(HttpResponse response) {
