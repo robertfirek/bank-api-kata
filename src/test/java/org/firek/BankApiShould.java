@@ -97,11 +97,77 @@ public class BankApiShould {
                 .returnResponse();
 
         assertThat(transferEndpointResponse.getStatusLine().getStatusCode()).isEqualTo(HttpStatus.SC_OK);
-        assertThat(responseCode(balanceForAccountResponse)).isEqualTo(HttpStatus.SC_OK);
         assertThat(amount(balanceForAccountResponse)).usingComparator(Comparator.comparing(Amount::getAmount))
                 .isEqualTo(expectedBalanceForAccount);
         assertThat(amount(balanceForAnotherAccountResponse)).usingComparator(Comparator.comparing(Amount::getAmount))
                 .isEqualTo(expectedBalanceForAnotherAccount);
+    }
+
+    @Test
+    public void not_transfer_money_from_source_account_to_target_account_when_source_account_does_not_have_enough_money()
+            throws Exception {
+        Amount tooBigTransferAmount = new Amount(new BigDecimal("1000000"));
+        String transferEndpoint = String.format(TRANSFER_ENDPOINT_URI, ACCOUNT_NUMBER, ANOTHER_ACCOUNT_NUMBER);
+        String balanceEndpointForAccount = String.format(ACCOUNT_BALANCE_ENDPOINT_URI, ACCOUNT_NUMBER);
+        String balanceEndpointForAnotherAccount = String.format(ACCOUNT_BALANCE_ENDPOINT_URI, ANOTHER_ACCOUNT_NUMBER);
+        String transferAmountAsJson = new Gson().toJson(tooBigTransferAmount);
+
+        HttpResponse transferEndpointResponse = Request.Post(transferEndpoint)
+                .bodyString(transferAmountAsJson, ContentType.APPLICATION_JSON)
+                .execute()
+                .returnResponse();
+        HttpResponse balanceForAccountResponse = Request.Get(balanceEndpointForAccount)
+                .execute()
+                .returnResponse();
+        HttpResponse balanceForAnotherAccountResponse = Request.Get(balanceEndpointForAnotherAccount)
+                .execute()
+                .returnResponse();
+
+        assertThat(transferEndpointResponse.getStatusLine().getStatusCode()).isEqualTo(HttpStatus.SC_NO_CONTENT);
+        assertThat(amount(balanceForAccountResponse)).usingComparator(Comparator.comparing(Amount::getAmount))
+                .isEqualTo(BALANCE_AMOUNT);
+        assertThat(amount(balanceForAnotherAccountResponse)).usingComparator(Comparator.comparing(Amount::getAmount))
+                .isEqualTo(ANOTHER_BALANCE_AMOUNT);
+    }
+
+    @Test
+    public void not_transfer_money_from_non_existing_account_to() throws Exception {
+        Integer notExistingAccountNumber = 102;
+        String transferEndpoint = String.format(TRANSFER_ENDPOINT_URI, notExistingAccountNumber, ANOTHER_ACCOUNT_NUMBER);
+        String balanceEndpointForAnotherAccount = String.format(ACCOUNT_BALANCE_ENDPOINT_URI, ANOTHER_ACCOUNT_NUMBER);
+        String transferAmountAsJson = new Gson().toJson(TRANSFER_AMOUNT);
+
+        HttpResponse transferEndpointResponse = Request.Post(transferEndpoint)
+                .bodyString(transferAmountAsJson, ContentType.APPLICATION_JSON)
+                .execute()
+                .returnResponse();
+        HttpResponse balanceForAnotherAccountResponse = Request.Get(balanceEndpointForAnotherAccount)
+                .execute()
+                .returnResponse();
+
+        assertThat(transferEndpointResponse.getStatusLine().getStatusCode()).isEqualTo(HttpStatus.SC_NOT_FOUND);
+        assertThat(amount(balanceForAnotherAccountResponse)).usingComparator(Comparator.comparing(Amount::getAmount))
+                .isEqualTo(ANOTHER_BALANCE_AMOUNT);
+    }
+
+    @Test
+    public void not_transfer_money_to_non_existing_account_to() throws Exception {
+        Integer notExistingAccountNumber = 103;
+        String transferEndpoint = String.format(TRANSFER_ENDPOINT_URI, ACCOUNT_NUMBER, notExistingAccountNumber);
+        String balanceEndpointForAccount = String.format(ACCOUNT_BALANCE_ENDPOINT_URI, ACCOUNT_NUMBER);
+        String transferAmountAsJson = new Gson().toJson(TRANSFER_AMOUNT);
+
+        HttpResponse transferEndpointResponse = Request.Post(transferEndpoint)
+                .bodyString(transferAmountAsJson, ContentType.APPLICATION_JSON)
+                .execute()
+                .returnResponse();
+        HttpResponse balanceForAccountResponse = Request.Get(balanceEndpointForAccount)
+                .execute()
+                .returnResponse();
+
+        assertThat(transferEndpointResponse.getStatusLine().getStatusCode()).isEqualTo(HttpStatus.SC_NOT_FOUND);
+        assertThat(amount(balanceForAccountResponse)).usingComparator(Comparator.comparing(Amount::getAmount))
+                .isEqualTo(BALANCE_AMOUNT);
     }
 
     private Object[] account() {

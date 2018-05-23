@@ -1,0 +1,85 @@
+openapi: 3.0.1
+
+info:
+  title: 'Bank Transfers API'
+  version: '0.1'
+
+paths:
+  /account/{accountNumber}/balance:
+    get:
+      summary: "Retrieve the balance of the account identified by the account number"
+      operationId: 'accountBalance'
+      parameters:
+        - name: 'accountNumber'
+          in: 'path'
+          required: true
+          schema:
+            $ref: '#/components/schemas/accountNumber'
+
+      responses:
+        200:
+          description: 'Returns balance of the account.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/amount'
+
+        404:
+          description: 'The account cannot be found.'
+
+  /account/{sourceAccountNumber}/transfer/{targetAccountNumber}:
+    post:
+      summary: 'Transfer money from the source account to the target account'
+      operationId: 'transferMoney'
+
+      parameters:
+        - name: 'sourceAccountNumber'
+          description: '**The source account number**.'
+          in: 'path'
+          required: true
+          schema:
+            $ref: '#/components/schemas/accountNumber'
+
+        - name: 'targetAccountNumber'
+          description: '**The target account number**.'
+          in: 'path'
+          required: true
+          schema:
+            $ref: '#/components/schemas/accountNumber'
+
+
+      requestBody:
+        description: '**Transfer Amount**. *The amount of the transfer*'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/amount'
+        required: true
+
+      responses:
+        200:
+          description: 'The transfer was sucessful.'
+
+        204:
+          description: 'The transfer cannot be perfomed. Not enough money on the source account .'
+
+        404:
+          description: 'The source or target account cannot be found.'
+
+components:
+  schemas:
+
+    accountNumber:
+      title: 'An account number.'
+      type: 'integer'
+      minimum: 1
+
+    amount:
+      title: 'An amount.'
+      required:
+        - 'amount'
+      type: 'object'
+      properties:
+        amount:
+          type: 'integer'
+          minimum: 1

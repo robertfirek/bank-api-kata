@@ -2,6 +2,7 @@ package org.firek;
 
 import static java.util.Optional.ofNullable;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.http.HttpStatus.SC_OK;
 import static spark.Spark.exception;
 import static spark.Spark.get;
@@ -50,12 +51,22 @@ public class Bank {
             response.body("");
             response.status(SC_NOT_FOUND);
         });
+
+        exception(NotEnoughMoneyOnAccountException.class, (exception, request, response) -> {
+            response.type("");
+            response.body("");
+            response.status(SC_NO_CONTENT);
+        });
     }
 
     private void transfer(Integer sourceAccountNumber, Integer targetAccountNumber, Amount transferAmount,
             Map<Integer, Account> accountRepository) {
         Amount sourceAccountBalance = getAccountBalance(sourceAccountNumber, accountRepository);
         Amount targetAccountBalance = getAccountBalance(targetAccountNumber, accountRepository);
+
+        if (sourceAccountBalance.getAmount().compareTo(transferAmount.getAmount()) < 0) {
+            throw new NotEnoughMoneyOnAccountException();
+        }
 
         Amount newBalanceForSourceAccount = new Amount(sourceAccountBalance.getAmount().subtract(transferAmount.getAmount()));
         Amount newBalanceForTargetAccount = new Amount(targetAccountBalance.getAmount().add(transferAmount.getAmount()));
