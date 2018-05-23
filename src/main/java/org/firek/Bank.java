@@ -14,7 +14,11 @@ import org.firek.exceptions.NotEnoughMoneyOnAccountException;
 
 import com.google.gson.Gson;
 
+import spark.Request;
+import spark.Response;
+
 public class Bank {
+
     public static void main(String[] args) {
         Account[] accounts = new ArgumentsToAccountsConverter().convert(args);
         new Bank().routes(accounts);
@@ -23,36 +27,39 @@ public class Bank {
     void routes(Account... accounts) {
         AccountsRepository accountRepository = new AccountsRepository(accounts);
 
-        get("/account/:accountNumber/balance", (request, response) -> {
-            Integer accountNumber = new Integer(request.params("accountNumber"));
-            return new Gson().toJson(accountRepository.getBalance(accountNumber));
-        });
-
+        get("/account/:accountNumber/balance",
+                (request, response) -> handleBalanceRequest(accountRepository, request));
         post("/account/:sourceAccountNumber/transfer/:targetAccountNumber",
                 ContentType.APPLICATION_JSON.toString(),
-                (request, response) -> {
-                    Integer sourceAccountNumber = new Integer(request.params("sourceAccountNumber"));
-                    Integer targetAccountNumber = new Integer(request.params("targetAccountNumber"));
-                    Amount transferAmount = new Gson().fromJson(request.body(), Amount.class);
+                (request, response) -> handleTransferRequest(accountRepository, request, response));
 
-                    accountRepository.transfer(sourceAccountNumber, targetAccountNumber, transferAmount);
+        exception(AccountNotFoundException.class,
+                (exception, request, response) -> setResponseHttpStatus(response, SC_NOT_FOUND));
+        exception(NotEnoughMoneyOnAccountException.class,
+                (exception, request, response) -> setResponseHttpStatus(response, SC_NO_CONTENT));
+    }
 
-                    response.type("");
-                    response.body("");
-                    response.status(SC_OK);
-                    return "";
-                });
+    private String handleBalanceRequest(AccountsRepository accountRepository, Request request) {
+        Integer accountNumber = new Integer(request.params("accountNumber"));
+        Amount accountBalance = accountRepository.getBalance(accountNumber);
 
-        exception(AccountNotFoundException.class, (exception, request, response) -> {
-            response.type("");
-            response.body("");
-            response.status(SC_NOT_FOUND);
-        });
+        return new Gson().toJson(accountBalance);
+    }
 
-        exception(NotEnoughMoneyOnAccountException.class, (exception, request, response) -> {
-            response.type("");
-            response.body("");
-            response.status(SC_NO_CONTENT);
-        });
+    private String handleTransferRequest(AccountsRepository accountRepository, Request request, Response response) {
+        Integer sourceAccountNumber = new Integer(request.params("sourceAccountNumber"));
+        Integer targetAccountNumber = new Integer(request.params("targetAccountNumber"));
+        Amount transferAmount = new Gson().fromJson(request.body(), Amount.class);
+
+        accountRepository.transfer(sourceAccountNumber, targetAccountNumber, transferAmount);
+
+        setResponseHttpStatus(response, SC_OK);
+        return "";
+    }
+
+    private void setResponseHttpStatus(Response response, int scNoContent) {
+        response.type("");
+        response.body("");
+        response.status(scNoContent);
     }
 }
