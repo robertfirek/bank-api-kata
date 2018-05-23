@@ -6,7 +6,6 @@ import static spark.Spark.stop;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Comparator;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -61,7 +60,7 @@ public class BankApiShould {
         HttpResponse response = Request.Get(transferEndpoint).execute().returnResponse();
 
         assertThat(responseCode(response)).isEqualTo(HttpStatus.SC_OK);
-        assertThat(amount(response)).usingComparator(Comparator.comparing(Amount::getAmount)).isEqualTo(expectedBalance);
+        assertThat(amount(response)).usingComparator(Amount::compareTo).isEqualTo(expectedBalance);
     }
 
     @Test
@@ -81,9 +80,8 @@ public class BankApiShould {
         String balanceEndpointForAccount = String.format(ACCOUNT_BALANCE_ENDPOINT_URI, ACCOUNT_NUMBER);
         String balanceEndpointForAnotherAccount = String.format(ACCOUNT_BALANCE_ENDPOINT_URI, ANOTHER_ACCOUNT_NUMBER);
         String transferAmountAsJson = new Gson().toJson(TRANSFER_AMOUNT);
-        Amount expectedBalanceForAccount = new Amount(BALANCE_AMOUNT.getAmount().subtract(TRANSFER_AMOUNT.getAmount()));
-        Amount expectedBalanceForAnotherAccount = new Amount(
-                ANOTHER_BALANCE_AMOUNT.getAmount().add(TRANSFER_AMOUNT.getAmount()));
+        Amount expectedBalanceForAccount = BALANCE_AMOUNT.subtract(TRANSFER_AMOUNT);
+        Amount expectedBalanceForAnotherAccount = ANOTHER_BALANCE_AMOUNT.add(TRANSFER_AMOUNT);
 
         HttpResponse transferEndpointResponse = Request.Post(transferEndpoint)
                 .bodyString(transferAmountAsJson, ContentType.APPLICATION_JSON)
@@ -97,9 +95,9 @@ public class BankApiShould {
                 .returnResponse();
 
         assertThat(transferEndpointResponse.getStatusLine().getStatusCode()).isEqualTo(HttpStatus.SC_OK);
-        assertThat(amount(balanceForAccountResponse)).usingComparator(Comparator.comparing(Amount::getAmount))
+        assertThat(amount(balanceForAccountResponse)).usingComparator(Amount::compareTo)
                 .isEqualTo(expectedBalanceForAccount);
-        assertThat(amount(balanceForAnotherAccountResponse)).usingComparator(Comparator.comparing(Amount::getAmount))
+        assertThat(amount(balanceForAnotherAccountResponse)).usingComparator(Amount::compareTo)
                 .isEqualTo(expectedBalanceForAnotherAccount);
     }
 
@@ -124,9 +122,9 @@ public class BankApiShould {
                 .returnResponse();
 
         assertThat(transferEndpointResponse.getStatusLine().getStatusCode()).isEqualTo(HttpStatus.SC_NO_CONTENT);
-        assertThat(amount(balanceForAccountResponse)).usingComparator(Comparator.comparing(Amount::getAmount))
+        assertThat(amount(balanceForAccountResponse)).usingComparator(Amount::compareTo)
                 .isEqualTo(BALANCE_AMOUNT);
-        assertThat(amount(balanceForAnotherAccountResponse)).usingComparator(Comparator.comparing(Amount::getAmount))
+        assertThat(amount(balanceForAnotherAccountResponse)).usingComparator(Amount::compareTo)
                 .isEqualTo(ANOTHER_BALANCE_AMOUNT);
     }
 
@@ -146,7 +144,7 @@ public class BankApiShould {
                 .returnResponse();
 
         assertThat(transferEndpointResponse.getStatusLine().getStatusCode()).isEqualTo(HttpStatus.SC_NOT_FOUND);
-        assertThat(amount(balanceForAnotherAccountResponse)).usingComparator(Comparator.comparing(Amount::getAmount))
+        assertThat(amount(balanceForAnotherAccountResponse)).usingComparator(Amount::compareTo)
                 .isEqualTo(ANOTHER_BALANCE_AMOUNT);
     }
 
@@ -166,7 +164,7 @@ public class BankApiShould {
                 .returnResponse();
 
         assertThat(transferEndpointResponse.getStatusLine().getStatusCode()).isEqualTo(HttpStatus.SC_NOT_FOUND);
-        assertThat(amount(balanceForAccountResponse)).usingComparator(Comparator.comparing(Amount::getAmount))
+        assertThat(amount(balanceForAccountResponse)).usingComparator(Amount::compareTo)
                 .isEqualTo(BALANCE_AMOUNT);
     }
 

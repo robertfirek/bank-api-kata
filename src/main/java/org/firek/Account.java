@@ -1,19 +1,19 @@
 package org.firek;
 
-class Account {
+public class Account {
     private final Integer accountNumber;
     private final Amount balanceAmount;
 
-    Account(Integer accountNumber, Amount balanceAmount) {
+    public Account(Integer accountNumber, Amount balanceAmount) {
         this.accountNumber = accountNumber;
         this.balanceAmount = balanceAmount;
     }
 
-    Integer getNumber() {
+    public Integer getNumber() {
         return accountNumber;
     }
 
-    Amount getBalance() {
+    public Amount getBalance() {
         return balanceAmount;
     }
 }

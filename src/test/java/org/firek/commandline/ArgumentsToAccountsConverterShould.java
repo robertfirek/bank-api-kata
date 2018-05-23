@@ -1,10 +1,12 @@
-package org.firek;
+package org.firek.commandline;
 
 import static java.lang.String.format;
-import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 
+import org.assertj.core.api.Assertions;
+import org.firek.Account;
+import org.firek.Amount;
 import org.junit.Test;
 
 public class ArgumentsToAccountsConverterShould {
@@ -23,7 +25,7 @@ public class ArgumentsToAccountsConverterShould {
     public void convert_list_of_arguments_to_accounts() {
         Account[] accounts = new ArgumentsToAccountsConverter().convert(ARGUMENTS);
 
-        assertThat(accounts).usingElementComparator(this::accountComparator)
+        Assertions.assertThat(accounts).usingElementComparator(this::accountComparator)
                 .containsExactly(
                         account(ACCOUNT_NUMBER, ACCOUNT_BALANCE),
                         account(ANOTHER_ACCOUNT_NUMBER, ANOTHER_ACCOUNT_BALANCE)
@@ -34,7 +36,7 @@ public class ArgumentsToAccountsConverterShould {
     public void not_return_accounts_when_accounts_are_not_defined() {
         Account[] accounts = new ArgumentsToAccountsConverter().convert(null);
 
-        assertThat(accounts).isEmpty();
+        Assertions.assertThat(accounts).isEmpty();
     }
 
     private Account account(Integer accountNumber, String accountBalance) {
@@ -50,6 +52,6 @@ public class ArgumentsToAccountsConverterShould {
     }
 
     private boolean amountIsEqual(Account thisAccount, Account thatAccount) {
-        return thisAccount.getBalance().getAmount().compareTo(thatAccount.getBalance().getAmount()) == 0;
+        return thisAccount.getBalance().compareTo(thatAccount.getBalance()) == 0;
     }
 }

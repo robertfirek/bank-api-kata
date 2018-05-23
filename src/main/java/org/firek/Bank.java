@@ -14,6 +14,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.http.entity.ContentType;
+import org.firek.commandline.ArgumentsToAccountsConverter;
+import org.firek.exceptions.AccountNotFoundException;
+import org.firek.exceptions.NotEnoughMoneyOnAccountException;
 
 import com.google.gson.Gson;
 
@@ -64,12 +67,12 @@ public class Bank {
         Amount sourceAccountBalance = getAccountBalance(sourceAccountNumber, accountRepository);
         Amount targetAccountBalance = getAccountBalance(targetAccountNumber, accountRepository);
 
-        if (sourceAccountBalance.getAmount().compareTo(transferAmount.getAmount()) < 0) {
+        if (sourceAccountBalance.compareTo(transferAmount) < 0) {
             throw new NotEnoughMoneyOnAccountException();
         }
 
-        Amount newBalanceForSourceAccount = new Amount(sourceAccountBalance.getAmount().subtract(transferAmount.getAmount()));
-        Amount newBalanceForTargetAccount = new Amount(targetAccountBalance.getAmount().add(transferAmount.getAmount()));
+        Amount newBalanceForSourceAccount = sourceAccountBalance.subtract(transferAmount);
+        Amount newBalanceForTargetAccount = targetAccountBalance.add(transferAmount);
 
         accountRepository.put(sourceAccountNumber, new Account(sourceAccountNumber, newBalanceForSourceAccount));
         accountRepository.put(targetAccountNumber, new Account(sourceAccountNumber, newBalanceForTargetAccount));
@@ -83,10 +86,7 @@ public class Bank {
     }
 
     private Map<Integer, Account> createAccountsRepository(Account[] accounts) {
-        return Arrays.stream(accounts)
-                .collect(Collectors.toMap(Account::getNumber, Function.identity()));
+        return Arrays.stream(accounts).collect(Collectors.toMap(Account::getNumber, Function.identity()));
     }
 
-    private class AccountNotFoundException extends RuntimeException {
-    }
 }
