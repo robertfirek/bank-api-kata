@@ -1,15 +1,18 @@
 package org.firek;
 
 import static java.util.Optional.ofNullable;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.apache.http.HttpStatus.SC_OK;
 import static spark.Spark.exception;
 import static spark.Spark.get;
+import static spark.Spark.post;
 
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.http.HttpStatus;
+import org.apache.http.entity.ContentType;
 
 import com.google.gson.Gson;
 
@@ -27,11 +30,38 @@ public class Bank {
             return new Gson().toJson(getAccountBalance(accountNumber, accountRepository));
         });
 
+        post("/account/:sourceAccountNumber/transfer/:targetAccountNumber",
+                ContentType.APPLICATION_JSON.toString(),
+                (request, response) -> {
+                    Integer sourceAccountNumber = new Integer(request.params("sourceAccountNumber"));
+                    Integer targetAccountNumber = new Integer(request.params("targetAccountNumber"));
+                    Amount transferAmount = new Gson().fromJson(request.body(), Amount.class);
+
+                    transfer(sourceAccountNumber, targetAccountNumber, transferAmount, accountRepository);
+
+                    response.type("");
+                    response.body("");
+                    response.status(SC_OK);
+                    return "";
+                });
+
         exception(AccountNotFoundException.class, (exception, request, response) -> {
             response.type("");
             response.body("");
-            response.status(HttpStatus.SC_NOT_FOUND);
+            response.status(SC_NOT_FOUND);
         });
+    }
+
+    private void transfer(Integer sourceAccountNumber, Integer targetAccountNumber, Amount transferAmount,
+            Map<Integer, Account> accountRepository) {
+        Amount sourceAccountBalance = getAccountBalance(sourceAccountNumber, accountRepository);
+        Amount targetAccountBalance = getAccountBalance(targetAccountNumber, accountRepository);
+
+        Amount newBalanceForSourceAccount = new Amount(sourceAccountBalance.getAmount().subtract(transferAmount.getAmount()));
+        Amount newBalanceForTargetAccount = new Amount(targetAccountBalance.getAmount().add(transferAmount.getAmount()));
+
+        accountRepository.put(sourceAccountNumber, new Account(sourceAccountNumber, newBalanceForSourceAccount));
+        accountRepository.put(targetAccountNumber, new Account(sourceAccountNumber, newBalanceForTargetAccount));
     }
 
     private Amount getAccountBalance(Integer accountNumber, Map<Integer, Account> accountRepository) {
