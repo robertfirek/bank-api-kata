@@ -18,7 +18,7 @@ Example:
 
 Above application is going to have two account : 
 - the account with the identifier `123` and the balance of `10.23` 
-- the account with the identifier `987` and the balance of `32.45'
+- the account with the identifier `987` and the balance of `32.45`
 
 Localhost address: `http://localhost:4567/<api_endpoint>`.
 
