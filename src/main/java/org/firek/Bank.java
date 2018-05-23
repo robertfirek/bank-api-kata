@@ -15,7 +15,8 @@ import com.google.gson.Gson;
 
 public class Bank {
     public static void main(String[] args) {
-        new Bank().routes();
+        Account[] accounts = new ArgumentsToAccountsConverter().convert(args);
+        new Bank().routes(accounts);
     }
 
     void routes(Account... accounts) {
