@@ -19,12 +19,12 @@ import spark.Response;
 
 public class Bank {
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         Account[] accounts = new ArgumentsToAccountsConverter().convert(args);
         new Bank().routes(accounts);
     }
 
-    void routes(Account... accounts) {
+    private void routes(Account... accounts) {
         AccountsRepository accountRepository = new AccountsRepository(accounts);
 
         get("/account/:accountNumber/balance",

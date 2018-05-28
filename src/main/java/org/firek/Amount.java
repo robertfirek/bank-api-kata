@@ -17,11 +17,11 @@ public class Amount {
         return this.amount.compareTo(amountToCompare.amount);
     }
 
-    Amount subtract(Amount amountToSubtract) {
+    public Amount subtract(Amount amountToSubtract) {
         return new Amount(this.amount.subtract(amountToSubtract.amount));
     }
 
-    Amount add(Amount amountToAdd) {
+    public Amount add(Amount amountToAdd) {
         return new Amount(this.amount.add(amountToAdd.amount));
     }
 }

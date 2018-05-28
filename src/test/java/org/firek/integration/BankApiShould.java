@@ -1,4 +1,4 @@
-package org.firek;
+package org.firek.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static spark.Spark.awaitInitialization;
@@ -12,6 +12,9 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
+import org.firek.Account;
+import org.firek.Amount;
+import org.firek.Bank;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,9 +43,7 @@ public class BankApiShould {
 
     @Before
     public void setUp() {
-        Bank bank = new Bank();
-        bank.routes(ACCOUNT, ANOTHER_ACCOUNT);
-
+        Bank.main(accountAsString(ACCOUNT), accountAsString(ANOTHER_ACCOUNT));
         awaitInitialization();
     }
 
@@ -186,6 +187,10 @@ public class BankApiShould {
 
     private int responseCode(HttpResponse response) {
         return response.getStatusLine().getStatusCode();
+    }
+
+    private String accountAsString(Account account) {
+        return account.getNumber() + "," + account.getBalance().getAmount().toString();
     }
 
     private void awaitShutdown() {
